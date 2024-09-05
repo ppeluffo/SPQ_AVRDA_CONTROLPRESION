@@ -20,32 +20,28 @@ void tkCtl(void * pvParameters)
 	// Esta es la primer tarea que arranca.
 
 ( void ) pvParameters;
+//uint8_t a;
 
-/*
 	vTaskDelay( ( TickType_t)( 500 / portTICK_PERIOD_MS ) );
     xprintf_P(PSTR("Starting tkCtl..\r\n"));
-    
-    // Leo la configuracion de EE en systemConf
-    if ( ! load_config_from_NVM())  {
-       xprintf_P(PSTR("Loading config default..\r\n"));
-       config_default();
-    }
-*/
 
     WDG_INIT();
      
+    systemVars.status_register = word_setBit(systemVars.status_register, VALVES_UNKNOWN_bp );
+    systemVars.orders_register = systemVars.status_register;
+    systemVars.valve_0_status = VUNKNOWN;
+    systemVars.valve_1_status = VUNKNOWN;
+    
     // Por ultimo habilito a todas las otras tareas a arrancar
     starting_flag = true;
     
-	for( ;; )
+ 	for( ;; )
 	{
         //vTaskDelay( ( TickType_t)( 1000 / portTICK_PERIOD_MS ) );
 		vTaskDelay( ( TickType_t)( 1000 * TKCTL_DELAY_S / portTICK_PERIOD_MS ) );
         led_flash();
-        //sys_watchdog_check();
-        //sys_daily_reset();
-        //xprintf_P(PSTR("The quick brown fox jumps over the lazy dog = %d\r\n"),a++);
-        
+        sys_watchdog_check();
+        sys_daily_reset();        
 	}
 }
 //------------------------------------------------------------------------------

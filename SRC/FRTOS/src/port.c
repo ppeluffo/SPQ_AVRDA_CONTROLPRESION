@@ -216,9 +216,10 @@ static void prvSetupTimerInterrupt( void )
  */
     ISR( TICK_INT_vect, ISR_NAKED )
     {
+        
         /* Clear tick interrupt flag. */
-        CLR_INT( INT_FLAGS, INT_MASK );
-
+        CLR_INT( INT_FLAGS, INT_MASK );      
+        
         vPortYieldFromTick();
 
         asm volatile ( "reti" );

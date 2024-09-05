@@ -9,29 +9,22 @@ void VALVES_EN_init(void)
 	DISABLE_VALVES();
 }
 // -----------------------------------------------------------------------------
-void VALVE1_init(void)
+void VALVE_0_init(void)
 {
     // Configura el pin como output
-	VALVE_CTRL1_PORT.DIR |= VALVE_CTRL1_PIN_bm;	
-	CLOSE_VALVE1();
+	VALVE_0_CTRL_PORT.DIR |= VALVE_0_CTRL_PIN_bm;	
 }
 // -----------------------------------------------------------------------------
-void VALVE2_init(void)
+void VALVE_1_init(void)
 {
     // Configura el pin como output
-	VALVE_CTRL2_PORT.DIR |= VALVE_CTRL2_PIN_bm;	
-	CLOSE_VALVE2();
+	VALVE_1_CTRL_PORT.DIR |= VALVE_1_CTRL_PIN_bm;	
 }
 // -----------------------------------------------------------------------------
 void VALVES_init(void)
 {
     VALVES_EN_init();
-    VALVE1_init();
-    VALVE2_init();
-}
-// -----------------------------------------------------------------------------
-t_valves_status *get_valves_status(void)
-{
-    return &VALVES_STATUS;
+    VALVE_0_init();
+    VALVE_1_init();
 }
 // -----------------------------------------------------------------------------

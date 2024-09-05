@@ -130,6 +130,7 @@ int main(void) {
     system_init();
     
     frtos_open(fdTERM, 9600 );
+    frtos_open(fdRS485, 9600 );
     
     sem_SYSVars = xSemaphoreCreateMutexStatic( &SYSVARS_xMutexBuffer );
     
@@ -137,6 +138,8 @@ int main(void) {
     
     xHandle_tkCtl = xTaskCreateStatic( tkCtl, "CTL", tkCtl_STACK_SIZE, (void *)1, tkCtl_TASK_PRIORITY, tkCtl_Buffer, &tkCtl_Buffer_Ptr );
     xHandle_tkCmd = xTaskCreateStatic( tkCmd, "CMD", tkCmd_STACK_SIZE, (void *)1, tkCmd_TASK_PRIORITY, tkCmd_Buffer, &tkCmd_Buffer_Ptr );
+    xHandle_tkSys = xTaskCreateStatic( tkSys, "SYS", tkSys_STACK_SIZE, (void *)1, tkSys_TASK_PRIORITY, tkSys_Buffer, &tkSys_Buffer_Ptr );
+    xHandle_tkRS485 = xTaskCreateStatic( tkRS485RX, "RS485", tkRS485_STACK_SIZE, (void *)1, tkRS485_TASK_PRIORITY, tkRS485_Buffer, &tkRS485_Buffer_Ptr );
     
     /* Arranco el RTOS. */
 	vTaskStartScheduler();

@@ -60,13 +60,6 @@ int xfprintf( int fd, const char *fmt, ...)
 va_list args;
 int i = -1;
 
-    // Los fd RS485 requieren del RTS !!
-    if ( fd == fdRS485A )
-        SET_RTS_RS485A();
-
-    if ( fd == fdRS485B )
-        SET_RTS_RS485B();
-
 	// Espero el semaforo del buffer en forma persistente.
 	while ( xSemaphoreTake( sem_STDOUT, ( TickType_t ) 5 ) != pdTRUE )
 		vTaskDelay( ( TickType_t)( 5 ) );
@@ -79,17 +72,7 @@ int i = -1;
 	i = frtos_write(fd, (char *)stdout_buff, strlen((char *)stdout_buff) );
 
 	xSemaphoreGive( sem_STDOUT );
-    
-    if ( fd == fdRS485A ) {
-        vTaskDelay( ( TickType_t)( 2 ) );
-        CLEAR_RTS_RS485A();
-    }
-
-    if ( fd == fdRS485B ) {
-        vTaskDelay( ( TickType_t)( 2 ) );
-        CLEAR_RTS_RS485B();
-    }
-    
+        
 	return(i);
 
 }
@@ -139,13 +122,6 @@ int xfprintf_P( int fd, PGM_P fmt, ...)
 va_list args;
 int i;
 
-    // Los fd RS485 requieren del RTS !!
-    if ( fd == fdRS485A )
-        SET_RTS_RS485A();
-
-    if ( fd == fdRS485B )
-        SET_RTS_RS485B();
-
 	// Espero el semaforo del buffer en forma persistente.
 	while ( xSemaphoreTake( sem_STDOUT, ( TickType_t ) 5 ) != pdTRUE )
 		vTaskDelay( ( TickType_t)( 5 ) );
@@ -159,17 +135,7 @@ int i;
 	// Espero que se vacie el buffer 10ms.
     vTaskDelay( ( TickType_t)( 10 / portTICK_PERIOD_MS ) );
 
-	xSemaphoreGive( sem_STDOUT );
-    
-    if ( fd == fdRS485A ) {
-        vTaskDelay( ( TickType_t)( 2 ) );
-        CLEAR_RTS_RS485A();
-    }
-
-    if ( fd == fdRS485B ) {
-        vTaskDelay( ( TickType_t)( 2 ) );
-        CLEAR_RTS_RS485B();
-    }
+	xSemaphoreGive( sem_STDOUT );   
     
 	return(i);
 
@@ -198,13 +164,6 @@ int xfputs( int fd, const char *str )
  
 int i = 0;
 
-    // Los fd RS485 requieren del RTS !!
-    if ( fd == fdRS485A )
-        SET_RTS_RS485A();
-
-    if ( fd == fdRS485B )
-        SET_RTS_RS485B();
-
 	while ( xSemaphoreTake( sem_STDOUT, ( TickType_t ) 5 ) != pdTRUE )
 		vTaskDelay( ( TickType_t)( 5 ) );
 
@@ -213,16 +172,6 @@ int i = 0;
     i = frtos_write(fd, (char *)stdout_buff, strlen((char *)stdout_buff) );
     
     xSemaphoreGive( sem_STDOUT );
-    
-    if ( fd == fdRS485A ) {
-        vTaskDelay( ( TickType_t)( 2 ) );
-        CLEAR_RTS_RS485A();
-    }
-
-    if ( fd == fdRS485B ) {
-        vTaskDelay( ( TickType_t)( 2 ) );
-        CLEAR_RTS_RS485B();
-    }
     
 	return(i);
 
@@ -251,14 +200,6 @@ void xfputChar(int fd, unsigned char c)
 
     //USART3_sendChar(c);
     //return;
-    
-    // Los fd RS485 requieren del RTS !!
-    if ( fd == fdRS485A )
-        SET_RTS_RS485A();
-
-    if ( fd == fdRS485B )
-        SET_RTS_RS485B();
-    
     while ( xSemaphoreTake( sem_STDOUT, ( TickType_t ) 5 ) != pdTRUE )
 		vTaskDelay( ( TickType_t)( 5 ) );
    
@@ -267,18 +208,6 @@ void xfputChar(int fd, unsigned char c)
     frtos_write( fd, (char *)stdout_buff, 1 );
    
     xSemaphoreGive( sem_STDOUT );
-    
-    if ( fd == fdRS485A ) {
-        vTaskDelay( ( TickType_t)( 2 ) );
-        CLEAR_RTS_RS485A();
-    }
-
-    if ( fd == fdRS485B ) {
-        vTaskDelay( ( TickType_t)( 2 ) );
-        CLEAR_RTS_RS485B();
-    }
-    
-    
 }
 //------------------------------------------------------------------------------
 void putch(char c)

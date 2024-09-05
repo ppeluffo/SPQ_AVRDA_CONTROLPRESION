@@ -17,24 +17,13 @@ extern "C" {
     
 //--------------------------------------------------------------------------
 
-#define RTS_RS485A_PORT         PORTC
-#define RTS_RS485A              2
-#define RTS_RS485A_PIN_bm       PIN2_bm
-#define RTS_RS485A_PIN_bp       PIN2_bp
-#define SET_RTS_RS485A()        ( RTS_RS485A_PORT.OUT |= RTS_RS485A_PIN_bm )
-#define CLEAR_RTS_RS485A()      ( RTS_RS485A_PORT.OUT &= ~RTS_RS485A_PIN_bm )
-
-#define CONFIG_RTS_485A()       RTS_RS485A_PORT.DIR |= RTS_RS485A_PIN_bm;
-
-
-#define RTS_RS485B_PORT         PORTG
-#define RTS_RS485B              7
-#define RTS_RS485B_PIN_bm       PIN7_bm
-#define RTS_RS485B_PIN_bp       PIN7_bp
-#define SET_RTS_RS485B()        ( RTS_RS485B_PORT.OUT |= RTS_RS485B_PIN_bm )
-#define CLEAR_RTS_RS485B()      ( RTS_RS485B_PORT.OUT &= ~RTS_RS485B_PIN_bm )
-
-#define CONFIG_RTS_485B()       RTS_RS485B_PORT.DIR |= RTS_RS485B_PIN_bm
+#define RTS_RS485_PORT         PORTC
+#define RTS_RS485              2
+#define RTS_RS485_PIN_bm       PIN2_bm
+#define RTS_RS485_PIN_bp       PIN2_bp
+#define SET_RTS_RS485()        ( RTS_RS485_PORT.OUT |= RTS_RS485_PIN_bm )
+#define CLEAR_RTS_RS485()      ( RTS_RS485_PORT.OUT &= ~RTS_RS485_PIN_bm )
+#define CONFIG_RTS_485()       RTS_RS485_PORT.DIR |= RTS_RS485_PIN_bm;
 
 // Los pines de FinCarrera son entradas
 #define FC1_PORT      PORTE    

@@ -23,10 +23,11 @@ void system_init()
     //WDT_init();
     LED_init();
     XPRINTF_init();
+    CONFIG_RTS_485();
+    CLEAR_RTS_RS485();
     VALVES_init();
     FCx_init();
-    TMC2209_init();
-    
+    //TMC2209_init();
    
 }
 //-----------------------------------------------------------------------------
@@ -41,8 +42,8 @@ int8_t WDT_init(void)
 int8_t CLKCTRL_init(void)
 {
 	// Configuro el clock para 24Mhz
-	
-	ccp_write_io((void *)&(CLKCTRL.OSCHFCTRLA), CLKCTRL_FREQSEL_24M_gc         /* 24 */
+                                               	
+	ccp_write_io((void *)&(CLKCTRL.OSCHFCTRLA), CLKCTRL_FRQSEL_24M_gc        /* 24 */
 	| 0 << CLKCTRL_AUTOTUNE_bp /* Auto-Tune enable: disabled */
 	| 0 << CLKCTRL_RUNSTDBY_bp /* Run standby: disabled */);
 
@@ -73,51 +74,21 @@ void kick_wdt( uint8_t bit_pos)
 void config_default(void)
 {
 
-    // Configuro a default todas las configuraciones locales
-    // y luego actualizo el systemConf
-        
 }
 //------------------------------------------------------------------------------
 bool config_debug( char *tipo, char *valor)
 {
-     
+
+    return (true);
 }
 //------------------------------------------------------------------------------
 bool save_config_in_NVM(void)
-{
-   
-int8_t retVal;
-uint8_t cks;
-
-    cks = checksum ( (uint8_t *)&systemConf, ( sizeof(systemConf) - 1));
-    systemConf.checksum = cks;
-    
-    retVal = NVMEE_write( 0x00, (char *)&systemConf, sizeof(systemConf) );
-    
-    //xprintf_P(PSTR("DEBUG: Save in NVM OK\r\n"));
-    
-    if (retVal == -1 )
-        return(false);
-    
-    return(true);
-   
+{    
+    return(true); 
 }
 //------------------------------------------------------------------------------
 bool load_config_from_NVM(void)
 {
-
-uint8_t rd_cks, calc_cks;
-    
-    NVMEE_read( 0x00, (char *)&systemConf, sizeof(systemConf) );
-    rd_cks = systemConf.checksum;
-    
-    calc_cks = checksum ( (uint8_t *)&systemConf, ( sizeof(systemConf) - 1));
-    
-    if ( calc_cks != rd_cks ) {
-		xprintf_P( PSTR("ERROR: Checksum systemVars failed: calc[0x%0x], read[0x%0x]\r\n"), calc_cks, rd_cks );
-        
-		return(false);
-	}
     
     return(true);
 }
@@ -140,5 +111,153 @@ uint16_t i = 0;
 	}
 
 	return(cks);
+}
+//------------------------------------------------------------------------------
+void u_update_valve_status(void)
+{
+    if ( ( systemVars.valve_0_status == VUNKNOWN ) || ( systemVars.valve_1_status == VUNKNOWN ) ) {
+        systemVars.status_register = word_setBit(systemVars.status_register, VALVES_UNKNOWN_bp );
+    } else {
+        systemVars.status_register = word_clearBit(systemVars.status_register, VALVES_UNKNOWN_bp );
+    }
+}
+//------------------------------------------------------------------------------
+void u_valve_0_open(void)
+{
+    OPEN_VALVE_0();
+    systemVars.valve_0_status = VOPEN;
+    systemVars.status_register = word_setBit(systemVars.status_register, VALVE_0_bp);
+    u_update_valve_status();
+   
+}
+//------------------------------------------------------------------------------
+void u_valve_0_close(void)
+{
+    CLOSE_VALVE_0();
+    systemVars.valve_0_status = VCLOSE;
+    systemVars.status_register = word_clearBit(systemVars.status_register, VALVE_0_bp);
+    u_update_valve_status();
+    
+}
+//------------------------------------------------------------------------------
+void u_valve_1_open(void)
+{
+    OPEN_VALVE_1();
+    systemVars.valve_1_status = VOPEN;
+    systemVars.status_register = word_setBit(systemVars.status_register, VALVE_1_bp);
+    u_update_valve_status();
+    
+}
+//------------------------------------------------------------------------------
+void u_valve_1_close(void)
+{
+    CLOSE_VALVE_1();
+    systemVars.valve_1_status = VCLOSE;
+    systemVars.status_register = word_clearBit(systemVars.status_register, VALVE_1_bp);
+    u_update_valve_status();
+    
+}
+//------------------------------------------------------------------------------
+void u_set_consigna( consigna_t consigna)
+{
+    
+    ENABLE_VALVES();
+    
+    if (consigna == CONSIGNA_DIURNA ) {
+        u_valve_0_open();
+        u_valve_1_close();
+        goto exit;
+    }
+    
+    if (consigna == CONSIGNA_NOCTURNA) {
+        u_valve_0_close();
+        u_valve_1_open();
+        goto exit;        
+        
+    }
+    
+exit:
+
+    vTaskDelay( ( TickType_t)( 10000 / portTICK_PERIOD_MS ) );   
+    DISABLE_VALVES();
+}
+//------------------------------------------------------------------------------
+bool test_set_consigna(char *s_modo,  char *s_action)
+{
+    
+    if (!strcmp_P( strupr(s_modo), PSTR("CMD"))  ) {
+        
+        if (!strcmp_P( strupr(s_action), PSTR("DIURNA"))  ) {
+            u_set_consigna(CONSIGNA_DIURNA);
+            return (true);
+        }
+    
+        if (!strcmp_P( strupr(s_action), PSTR("NOCTURNA"))  ) {
+            u_set_consigna(CONSIGNA_NOCTURNA);
+            return (true);
+        }
+    
+        return(false);        
+        
+    }
+    
+    if (!strcmp_P( strupr(s_modo), PSTR("SYS"))  ) {
+        
+        if (!strcmp_P( strupr(s_action), PSTR("DIURNA"))  ) {
+            systemVars.orders_register = 0x01;
+            return (true);
+        }
+    
+        if (!strcmp_P( strupr(s_action), PSTR("NOCTURNA"))  ) {
+            systemVars.orders_register = 0x02;
+            return (true);
+        }
+    
+        return(false);        
+        
+    }
+    
+    return(false);
+    
+
+}
+//------------------------------------------------------------------------------
+bool test_valve( uint8_t vid , char *s_action )
+{
+    
+bool retS = false;
+    
+    ENABLE_VALVES();
+    
+    switch(vid) {
+        case 0:
+            if (!strcmp_P( strupr(s_action), PSTR("OPEN"))  ) {
+                u_valve_0_open();
+                retS = true;
+            } else if (!strcmp_P( strupr(s_action), PSTR("CLOSE"))  ) {
+                u_valve_0_close();
+                retS = true;
+            }
+            break;
+            
+        case 1:
+            if (!strcmp_P( strupr(s_action), PSTR("OPEN"))  ) {
+                u_valve_1_open();
+                retS = true;
+            } else if (!strcmp_P( strupr(s_action), PSTR("CLOSE"))  ) {
+                u_valve_1_close();
+                retS = true;
+            }
+            break;
+    }
+    
+    
+    if (retS) {
+        // Debo actualizar el status register
+        vTaskDelay( ( TickType_t)( 10000 / portTICK_PERIOD_MS ) );
+    }
+    DISABLE_VALVES();
+    return(retS);
+    
 }
 //------------------------------------------------------------------------------

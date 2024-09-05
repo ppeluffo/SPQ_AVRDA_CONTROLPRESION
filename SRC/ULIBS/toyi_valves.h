@@ -16,15 +16,6 @@ extern "C" {
 #include "FreeRTOS.h"
 #include "task.h"
     
-typedef enum { VALVE_OPEN=0, VALVE_CLOSE } t_valve_status;
-    
-typedef struct {
-    t_valve_status V1_status;
-    t_valve_status V2_status;
-} t_valves_status;
-
-t_valves_status VALVES_STATUS;
-
 #define VALVES_EN_PORT      PORTB
 #define VALVES_EN_PIN_bm	PIN1_bm
 #define VALVES_EN_PIN_bp    PIN1_bp
@@ -32,27 +23,28 @@ t_valves_status VALVES_STATUS;
 #define ENABLE_VALVES()  ( VALVES_EN_PORT.OUT |= VALVES_EN_PIN_bm )
 #define DISABLE_VALVES() ( VALVES_EN_PORT.OUT &= ~VALVES_EN_PIN_bm )
 
-#define VALVE_CTRL1_PORT       PORTB
-#define VALVE_CTRL1_PIN_bm     PIN0_bm
-#define VALVE_CTRL1_PIN_bp     PIN0_bp
+#define VALVE_0_CTRL_PORT       PORTB
+#define VALVE_0_CTRL_PIN_bm     PIN0_bm
+#define VALVE_0_CTR1_PIN_bp     PIN0_bp
     
-#define OPEN_VALVE1()  ( VALVE_CTRL1_PORT.OUT |= VALVE_CTRL1_PIN_bm ); VALVES_STATUS.V1_status = VALVE_OPEN;
-#define CLOSE_VALVE1() ( VALVE_CTRL1_PORT.OUT &= ~VALVE_CTRL1_PIN_bm ); VALVES_STATUS.V1_status = VALVE_CLOSE;
+#define CLOSE_VALVE_0()  ( VALVE_0_CTRL_PORT.OUT |= VALVE_0_CTRL_PIN_bm )
+#define OPEN_VALVE_0() ( VALVE_0_CTRL_PORT.OUT &= ~VALVE_0_CTRL_PIN_bm )
 
-#define VALVE_CTRL2_PORT       PORTG
-#define VALVE_CTRL2_PIN_bm     PIN0_bm
-#define VALVE_CTRL2_PIN_bp     PIN0_bp
+#define VALVE_1_CTRL_PORT       PORTG
+#define VALVE_1_CTRL_PIN_bm     PIN0_bm
+#define VALVE_1_CTRL_PIN_bp     PIN0_bp
     
-#define OPEN_VALVE2()  ( VALVE_CTRL2_PORT.OUT |= VALVE_CTRL2_PIN_bm ); VALVES_STATUS.V2_status = VALVE_OPEN;
-#define CLOSE_VALVE2() ( VALVE_CTRL2_PORT.OUT &= ~VALVE_CTRL2_PIN_bm ); VALVES_STATUS.V2_status = VALVE_CLOSE;
+#define CLOSE_VALVE_1()  ( VALVE_1_CTRL_PORT.OUT |= VALVE_1_CTRL_PIN_bm )
+#define OPEN_VALVE_1() ( VALVE_1_CTRL_PORT.OUT &= ~VALVE_1_CTRL_PIN_bm )
+
+    
+typedef enum { VOPEN=0, VCLOSE, VUNKNOWN } t_valves_status;
     
 void VALVES_EN_init(void);
-void VALVE1_init(void);
-void VALVE2_init(void);
+void VALVE_0_init(void);
+void VALVE_1_init(void);
+
 void VALVES_init(void);
-t_valves_status *get_valves_status(void);
-
-
 
 
 #ifdef	__cplusplus

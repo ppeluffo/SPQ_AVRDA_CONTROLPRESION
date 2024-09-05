@@ -39,6 +39,7 @@ void TMC2209_EN_init(void);
     
 void TMC2209_DIR_init(void);
 
+
 #define TMC2209_STEP_PORT       PORTB
 #define TMC2209_STEP_PIN_bm     PIN3_bm
 #define TMC2209_STEP_PIN_bp     PIN3_bp
@@ -52,6 +53,10 @@ void TMC2209_STEP_init(void);
 void TMC2209_init(void);
 void tmc2209_start(t_tmc2209_dir dir, uint8_t period, uint16_t pulse_counts);
 void tmc2209_stop(void);
+
+void TMC2209_TIMER_start(void);
+void TMC2209_TIMER_stop(void);
+void TMC2209_TIMER_freq(uint16_t freq);
 
 #ifdef	__cplusplus
 }
