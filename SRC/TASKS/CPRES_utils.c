@@ -113,122 +113,64 @@ uint16_t i = 0;
 	return(cks);
 }
 //------------------------------------------------------------------------------
-void u_update_valve_status(void)
-{
-    if ( ( systemVars.valve_0_status == VUNKNOWN ) || ( systemVars.valve_1_status == VUNKNOWN ) ) {
-        systemVars.status_register = word_setBit(systemVars.status_register, VALVES_UNKNOWN_bp );
-    } else {
-        systemVars.status_register = word_clearBit(systemVars.status_register, VALVES_UNKNOWN_bp );
-    }
-}
-//------------------------------------------------------------------------------
 void u_valve_0_open(void)
 {
+    ENABLE_VALVES();
+    vTaskDelay( ( TickType_t)( 500 / portTICK_PERIOD_MS ) );
+    
     OPEN_VALVE_0();
-    systemVars.valve_0_status = VOPEN;
-    systemVars.status_register = word_setBit(systemVars.status_register, VALVE_0_bp);
-    u_update_valve_status();
+    systemVars.status_register = byte_clearBit(systemVars.status_register, VALVE_0_bp);
+    systemVars.status_register = byte_clearBit(systemVars.status_register, VALVE_0_UNKNOWN_bp);
    
+    vTaskDelay( ( TickType_t)( 5000 / portTICK_PERIOD_MS ) );
+    DISABLE_VALVES();
+    
 }
 //------------------------------------------------------------------------------
 void u_valve_0_close(void)
 {
-    CLOSE_VALVE_0();
-    systemVars.valve_0_status = VCLOSE;
-    systemVars.status_register = word_clearBit(systemVars.status_register, VALVE_0_bp);
-    u_update_valve_status();
+    ENABLE_VALVES();
+    vTaskDelay( ( TickType_t)( 500 / portTICK_PERIOD_MS ) );
     
+    CLOSE_VALVE_0();
+    systemVars.status_register = byte_setBit(systemVars.status_register, VALVE_0_bp);
+    systemVars.status_register = byte_clearBit(systemVars.status_register, VALVE_0_UNKNOWN_bp);
+ 
+    vTaskDelay( ( TickType_t)( 5000 / portTICK_PERIOD_MS ) );
+    DISABLE_VALVES();
 }
 //------------------------------------------------------------------------------
 void u_valve_1_open(void)
 {
-    OPEN_VALVE_1();
-    systemVars.valve_1_status = VOPEN;
-    systemVars.status_register = word_setBit(systemVars.status_register, VALVE_1_bp);
-    u_update_valve_status();
+    ENABLE_VALVES();
+    vTaskDelay( ( TickType_t)( 500 / portTICK_PERIOD_MS ) );
     
+    OPEN_VALVE_1();
+    systemVars.status_register = byte_clearBit(systemVars.status_register, VALVE_1_bp);
+    systemVars.status_register = byte_clearBit(systemVars.status_register, VALVE_1_UNKNOWN_bp);
+
+    vTaskDelay( ( TickType_t)( 5000 / portTICK_PERIOD_MS ) );
+    DISABLE_VALVES();
 }
 //------------------------------------------------------------------------------
 void u_valve_1_close(void)
 {
-    CLOSE_VALVE_1();
-    systemVars.valve_1_status = VCLOSE;
-    systemVars.status_register = word_clearBit(systemVars.status_register, VALVE_1_bp);
-    u_update_valve_status();
-    
-}
-//------------------------------------------------------------------------------
-void u_set_consigna( consigna_t consigna)
-{
-    
     ENABLE_VALVES();
+    vTaskDelay( ( TickType_t)( 500 / portTICK_PERIOD_MS ) );
     
-    if (consigna == CONSIGNA_DIURNA ) {
-        u_valve_0_open();
-        u_valve_1_close();
-        goto exit;
-    }
-    
-    if (consigna == CONSIGNA_NOCTURNA) {
-        u_valve_0_close();
-        u_valve_1_open();
-        goto exit;        
-        
-    }
-    
-exit:
-
-    vTaskDelay( ( TickType_t)( 10000 / portTICK_PERIOD_MS ) );   
+    CLOSE_VALVE_1();
+    systemVars.status_register = byte_setBit(systemVars.status_register, VALVE_1_bp);
+    systemVars.status_register = byte_clearBit(systemVars.status_register, VALVE_1_UNKNOWN_bp);
+  
+    vTaskDelay( ( TickType_t)( 5000 / portTICK_PERIOD_MS ) );
     DISABLE_VALVES();
-}
-//------------------------------------------------------------------------------
-bool test_set_consigna(char *s_modo,  char *s_action)
-{
-    
-    if (!strcmp_P( strupr(s_modo), PSTR("CMD"))  ) {
-        
-        if (!strcmp_P( strupr(s_action), PSTR("DIURNA"))  ) {
-            u_set_consigna(CONSIGNA_DIURNA);
-            return (true);
-        }
-    
-        if (!strcmp_P( strupr(s_action), PSTR("NOCTURNA"))  ) {
-            u_set_consigna(CONSIGNA_NOCTURNA);
-            return (true);
-        }
-    
-        return(false);        
-        
-    }
-    
-    if (!strcmp_P( strupr(s_modo), PSTR("SYS"))  ) {
-        
-        if (!strcmp_P( strupr(s_action), PSTR("DIURNA"))  ) {
-            systemVars.orders_register = 0x01;
-            return (true);
-        }
-    
-        if (!strcmp_P( strupr(s_action), PSTR("NOCTURNA"))  ) {
-            systemVars.orders_register = 0x02;
-            return (true);
-        }
-    
-        return(false);        
-        
-    }
-    
-    return(false);
-    
-
 }
 //------------------------------------------------------------------------------
 bool test_valve( uint8_t vid , char *s_action )
 {
     
 bool retS = false;
-    
-    ENABLE_VALVES();
-    
+       
     switch(vid) {
         case 0:
             if (!strcmp_P( strupr(s_action), PSTR("OPEN"))  ) {
@@ -251,13 +193,65 @@ bool retS = false;
             break;
     }
     
-    
-    if (retS) {
-        // Debo actualizar el status register
-        vTaskDelay( ( TickType_t)( 10000 / portTICK_PERIOD_MS ) );
-    }
-    DISABLE_VALVES();
     return(retS);
     
+}
+//------------------------------------------------------------------------------
+void u_set_consigna( consigna_t consigna)
+{
+    
+    ENABLE_VALVES();
+    vTaskDelay( ( TickType_t)( 500 / portTICK_PERIOD_MS ) );
+    
+    if (consigna == CONSIGNA_DIURNA ) {
+        // V0 open
+        // V1 close
+        OPEN_VALVE_0();
+        systemVars.status_register = byte_clearBit(systemVars.status_register, VALVE_0_bp);
+        systemVars.status_register = byte_clearBit(systemVars.status_register, VALVE_0_UNKNOWN_bp);
+
+        CLOSE_VALVE_1();
+        systemVars.status_register = byte_setBit(systemVars.status_register, VALVE_1_bp);
+        systemVars.status_register = byte_clearBit(systemVars.status_register, VALVE_1_UNKNOWN_bp);
+ 
+        goto exit;
+    }
+    
+    if (consigna == CONSIGNA_NOCTURNA) {
+        // V0 close
+        // V1 open
+        CLOSE_VALVE_0();
+        systemVars.status_register = byte_setBit(systemVars.status_register, VALVE_0_bp);
+        systemVars.status_register = byte_clearBit(systemVars.status_register, VALVE_0_UNKNOWN_bp);
+    
+        OPEN_VALVE_1();
+        systemVars.status_register = byte_clearBit(systemVars.status_register, VALVE_1_bp);
+        systemVars.status_register = byte_clearBit(systemVars.status_register, VALVE_1_UNKNOWN_bp);
+        
+        goto exit;        
+        
+    }
+    
+exit:
+
+    vTaskDelay( ( TickType_t)( 5000 / portTICK_PERIOD_MS ) );   
+    DISABLE_VALVES();
+}
+//------------------------------------------------------------------------------
+bool test_set_consigna(char *s_action)
+{
+    
+    if (!strcmp_P( strupr(s_action), PSTR("DIURNA"))  ) {
+        u_set_consigna(CONSIGNA_DIURNA);
+        return (true);
+    }
+    
+    if (!strcmp_P( strupr(s_action), PSTR("NOCTURNA"))  ) {
+        u_set_consigna(CONSIGNA_NOCTURNA);
+        return (true);
+    }
+    
+    return(false);        
+        
 }
 //------------------------------------------------------------------------------

@@ -83,7 +83,7 @@ extern "C" {
 #include "bits.h"
 
 #define FW_REV "1.0.0"
-#define FW_DATE "@ 20240905"
+#define FW_DATE "@ 20241216"
 #define HW_MODELO "CPRES FRTOS R001 HW:AVR128DA64"
 #define FRTOS_VERSION "FW:FreeRTOS V202111.00"
 #define FW_TYPE "AUXBOARD"
@@ -144,35 +144,56 @@ void RS485_config_debug(bool debug );
 typedef enum { CONSIGNA_DIURNA = 0, CONSIGNA_NOCTURNA } consigna_t;
 
 void u_set_consigna( consigna_t consigna);
+bool test_set_consigna(char *s_action);
+
 void u_valve_0_open(void);
 void u_valve_0_close(void);
 void u_valve_1_open(void);
 void u_valve_1_close(void);
-void u_update_valve_status(void);
-
-bool test_set_consigna(char *s_modo, char *s_action);
 bool test_valve( uint8_t vid , char *s_action );
 
 bool starting_flag;
 
+/*
+ status:
+ * b7: 0-idle, 1-working
+ * b6
+ * b5
+ * b4
+ * b3,b2: v1 status: 0-open,1-close, 2-3 unknown
+ * b1,b0: v0 status
+ */
+
+
+#define MODBUS_LOCALADDR 0x64
+
 struct {   
     bool debug;
     float battery;
-    uint16_t status_register;
-    uint16_t orders_register;
-    t_valves_status valve_0_status;
-    t_valves_status valve_1_status;
+    uint8_t status_register;
+    uint8_t orders_register;
 } systemVars;
 
 
 #define VALVE_0_bp          0
-#define VALVE_1_bp          1
-#define VALVES_UNKNOWN_bp   2
+#define VALVE_0_UNKNOWN_bp   1
+#define VALVE_1_bp          2
+#define VALVE_1_UNKNOWN_bp   3
+
+
+typedef enum { CMD_NONE=0,
+        CMD_OPEN_V0,
+        CMD_CLOSE_V0,
+        CMD_OPEN_V1,
+        CMD_CLOSE_V1,
+        CMD_SET_CONSIGNA_DIURNA,
+        CMD_SET_CONSIGNA_NOCTURNA
+} cmd_enum;
 
 #define CONSIGNA_DIURNA         0x01
 #define CONSIGNA_NOCTURNA       0x02
 
-#define STATUS_BIT 15
+#define STATUS_BIT 7
 
 uint8_t sys_watchdog;
 
@@ -185,6 +206,17 @@ uint8_t sys_watchdog;
 #define WDG_bm 0x3
 
 #define WDG_INIT() ( sys_watchdog = WDG_bm )
+
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)  \
+  ((byte) & 0x80 ? '1' : '0'), \
+  ((byte) & 0x40 ? '1' : '0'), \
+  ((byte) & 0x20 ? '1' : '0'), \
+  ((byte) & 0x10 ? '1' : '0'), \
+  ((byte) & 0x08 ? '1' : '0'), \
+  ((byte) & 0x04 ? '1' : '0'), \
+  ((byte) & 0x02 ? '1' : '0'), \
+  ((byte) & 0x01 ? '1' : '0') 
 
 #endif	/* XC_HEADER_TEMPLATE_H */
 

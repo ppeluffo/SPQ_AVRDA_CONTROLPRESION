@@ -27,11 +27,6 @@ void tkCtl(void * pvParameters)
 
     WDG_INIT();
      
-    systemVars.status_register = word_setBit(systemVars.status_register, VALVES_UNKNOWN_bp );
-    systemVars.orders_register = systemVars.status_register;
-    systemVars.valve_0_status = VUNKNOWN;
-    systemVars.valve_1_status = VUNKNOWN;
-    
     // Por ultimo habilito a todas las otras tareas a arrancar
     starting_flag = true;
     

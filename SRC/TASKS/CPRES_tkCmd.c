@@ -14,8 +14,6 @@ static void cmdTestFunction(void);
 static void pv_snprintfP_OK(void );
 static void pv_snprintfP_ERR(void );
 
-static bool test_valves( char *vid, char *action);
-
 //------------------------------------------------------------------------------
 void tkCmd(void * pvParameters)
 {
@@ -92,11 +90,11 @@ static void cmdHelpFunction(void)
     } else if (!strcmp_P( strupr(argv[1]), PSTR("TEST"))) {
 		xprintf_P( PSTR("-test\r\n"));
         xprintf_P( PSTR("  kill {wan,sys}\r\n"));
-        xprintf_P( PSTR("  rs485 {read, write}\r\n"));
-        xprintf_P( PSTR("  statusreg {val}\r\n"));
+        //xprintf_P( PSTR("  rs485 {read, write}\r\n"));
+        xprintf_P( PSTR("  order {val}\r\n"));
         xprintf_P( PSTR("  valve {0|1} {open|close}\r\n"));
         xprintf_P( PSTR("  venable {on|off}\r\n"));
-        xprintf_P( PSTR("  consigna {cmd|sys} {diurna|nocturna}\r\n"));
+        xprintf_P( PSTR("  consigna {diurna|nocturna}\r\n"));
         return;
         
     }  else {
@@ -144,17 +142,29 @@ static void cmdTestFunction(void)
         return;
     }
     
-    // test consigna {cmd|sys} {diurna|nocturna}
+    // test consigna {diurna|nocturna}
     if (!strcmp_P( strupr(argv[1]), PSTR("CONSIGNA"))  ) {
-        test_set_consigna( argv[2], argv[3]) ? pv_snprintfP_OK() : pv_snprintfP_ERR();
+        test_set_consigna( argv[2]) ? pv_snprintfP_OK() : pv_snprintfP_ERR();
         return;
     }
 
-    if (!strcmp_P( strupr(argv[1]), PSTR("STATUSREG"))  ) {
-        systemVars.status_register = atoi(argv[2]);
+    // Se usa para simular un comando llegado por modbus
+    if (!strcmp_P( strupr(argv[1]), PSTR("ORDER"))  ) {
+        
+        while ( xSemaphoreTake( sem_SYSVars, ( TickType_t ) 5 ) != pdTRUE )
+            vTaskDelay( ( TickType_t)( 10 ) ); 
+        
+        systemVars.orders_register = atoi(argv[2]);
+        
+        xSemaphoreGive( sem_SYSVars );
+        
+        // Aviso a la tkSYS que hay trabajo que hacer
+        xTaskNotify( xHandle_tkSys, 0x01, eSetBits );
+        
         return;       
     }
     
+    /*
     if (!strcmp_P( strupr(argv[1]), PSTR("RS485"))  ) {
 
         if (!strcmp_P( strupr(argv[2]), PSTR("READ"))  ) {
@@ -170,6 +180,8 @@ static void cmdTestFunction(void)
         
         return;
     }
+    */
+    
           
     // test kill {sys}
     if (!strcmp_P( strupr(argv[1]), PSTR("KILL"))  ) {
@@ -243,8 +255,13 @@ static void cmdStatusFunction(void)
 
     xprintf("Spymovil %s %s TYPE=%s, VER=%s %s \r\n" , HW_MODELO, FRTOS_VERSION, FW_TYPE, FW_REV, FW_DATE);
          
-    xprintf_P(PSTR("Status_reg = 0x%04x\r\n"), systemVars.status_register);
-    xprintf_P(PSTR("Orders_reg = 0x%04x\r\n"), systemVars.orders_register);
+    //xprintf_P(PSTR("Status_reg = 0x%02x\r\n"), systemVars.status_register);
+    xprintf_P(PSTR("Modbus local address = 0x%02x\r\n"), MODBUS_LOCALADDR );
+    xprintf_P(PSTR("Status_reg = "));
+    xprintf_P(PSTR(BYTE_TO_BINARY_PATTERN), BYTE_TO_BINARY(systemVars.status_register) );
+    xprintf_P(PSTR("\r\n"));
+   
+    xprintf_P(PSTR("Orders_reg = 0x%02x\r\n"), systemVars.orders_register);
         
         
 }
@@ -279,13 +296,13 @@ static void cmdConfigFunction(void)
     if (!strcmp_P( strupr(argv[1]), PSTR("DEBUG")) ) {
         if (!strcmp_P( strupr(argv[2]), PSTR("RS485")) ) {
             if (!strcmp_P( strupr(argv[3]), PSTR("TRUE")) ) {
-                RS485_config_debug(true);
+                modbus_slave_config_debug(true);
                 pv_snprintfP_OK();
                 return;
             }
         
             if (!strcmp_P( strupr(argv[3]), PSTR("FALSE")) ) {
-                RS485_config_debug(false);
+                modbus_slave_config_debug(false);
                 pv_snprintfP_OK();
                 return;
             }
